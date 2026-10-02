@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QueryKit — Free URL Parser, UTM Builder & UTM Link Checker</title>
+<meta name="description" content="QueryKit parses any URL into toggleable query parameters, audits your UTM tags for common mistakes, builds clean UTM links from presets, and exports parameters as JSON or CSV. Free forever, no signup.">
+<meta property="og:title" content="QueryKit — Free URL Parser, UTM Builder & UTM Link Checker">
+<meta property="og:description" content="Break any URL into toggleable valves, audit UTM tags, build clean campaign links, and export params as JSON/CSV — free, in your browser.">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        control: '#23272E',
+        controldeep: '#1B1F25',
+        panel: '#2B303A',
+        pipe: '#3A414D',
+        amber: { 500: '#F59E0B', 400: '#FBBF24' },
+        mint: { 400: '#4ADE80' }
+      },
+      fontFamily: {
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { background:#1B1F25; }
+  .pipe-line { background: linear-gradient(180deg, #4A5261 0%, #2E333D 50%, #4A5261 100%); }
+  .valve-knob { transition: transform .35s cubic-bezier(.34,1.56,.64,1), background-color .2s, box-shadow .2s; }
+  .valve-knob.open { transform: rotate(90deg); background: radial-gradient(circle at 35% 30%, #FBBF24, #F59E0B 70%); box-shadow: 0 0 18px rgba(245,158,11,.45); }
+  .valve-knob.closed { transform: rotate(0deg); background: radial-gradient(circle at 35% 30%, #6B7280, #374151 70%); box-shadow: 0 0 6px rgba(0,0,0,.5); }
+  .valve-status-open { color:#4ADE80; }
+  .valve-status-closed { color:#9CA3AF; }
+  .gauge-bar { transition: width .5s ease; }
+  .tool-input { background:#1B1F25; border:1px solid #3A414D; color:#E5E7EB; }
+  .tool-input:focus { outline:none; border-color:#F59E0B; box-shadow:0 0 0 2px rgba(245,158,11,.25); }
+  .tool-input::placeholder { color:#6B7280; }
+  .scroll-thin::-webkit-scrollbar { height:8px; width:8px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background:#3A414D; border-radius:4px; }
+  .issue-error { border-left:3px solid #F87171; }
+  .issue-warn { border-left:3px solid #F59E0B; }
+  .issue-pass { border-left:3px solid #4ADE80; }
+  .fade-in { animation: fadeIn .4s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform:none;} }
+  .warn-shake { animation: shake .3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
+  select.tool-input option { background:#2B303A; }
+</style>
+</head>
+<body class="text-slate-200 font-display antialiased">
+
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-controldeep/95 backdrop-blur border-b border-pipe">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5">
+      <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/40">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round">
+          <path d="M4 12h6M14 12h6"/><circle cx="12" cy="12" r="2.6"/><path d="M12 9.4V5M12 19v-4.4M9.4 12H5M19 12h-4.4"/>
+        </svg>
+      </span>
+      <span class="text-xl font-bold tracking-tight text-white">Query<span class="text-amber-500">Kit</span></span>
+    </a>
+    <nav class="flex items-center gap-5 text-sm font-medium">
+      <a href="#top" class="text-slate-300 hover:text-amber-400 transition">Home</a>
+      <a href="https://fixoraa.tech" class="text-slate-300 hover:text-amber-400 transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="bg-control border-b border-pipe">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14 text-center">
+    <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] bg-mint-400/10 text-mint-400 border border-mint-400/30 rounded-full px-3.5 py-1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2 9 19.2 20 8.2l-1.4-1.4z"/></svg>
+      Unlimited Free Usage
+    </span>
+    <h1 class="mt-5 text-3xl sm:text-5xl font-bold text-white leading-tight">URL Parser, UTM Builder<br class="hidden sm:block"> &amp; UTM Link Checker</h1>
+    <p class="mt-4 max-w-2xl mx-auto text-slate-400 text-sm sm:text-base">Break any URL into toggleable valves, audit your UTM tags for mistakes, build clean campaign links from presets, and export parameters as JSON or CSV — all in your browser, no signup.</p>
+  </div>
+</section>
+
+<!-- TOP AD -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOOL ============ -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8 space-y-8">
+
+  <!-- Station 1: Parser + valves -->
+  <section id="parser-station" class="bg-control rounded-2xl border border-pipe overflow-hidden">
+    <div class="px-5 sm:px-7 py-5 border-b border-pipe flex items-center gap-3">
+      <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500 text-controldeep font-bold text-sm">1</span>
+      <div>
+        <h2 class="text-lg font-bold text-white">URL Parser — Valve Pipeline</h2>
+        <p class="text-xs text-slate-400">Paste a URL. Every query parameter becomes a valve — close one to drop it from the rebuilt link.</p>
+      </div>
+    </div>
+    <div class="p-5 sm:p-7 space-y-5">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input id="url-input" type="text" spellcheck="false" placeholder="Paste a URL, e.g. https://example.com/sale?utm_source=google&utm_medium=cpc&utm_campaign=launch"
+          class="tool-input flex-1 rounded-xl px-4 py-3 text-sm font-mono">
+        <div class="flex gap-2 shrink-0">
+          <button id="btn-sample" class="px-4 py-3 rounded-xl text-sm font-semibold bg-panel border border-pipe text-slate-200 hover:border-amber-500/60 transition">Sample</button>
+          <button id="btn-parse" class="px-5 py-3 rounded-xl text-sm font-bold bg-amber-500 text-controldeep hover:bg-amber-400 transition">Parse URL</button>
+        </div>
+      </div>
+      <p id="parse-msg" class="hidden text-sm rounded-xl px-4 py-3"></p>
+
+      <div id="pipeline-wrap" class="hidden">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider">Valve Pipeline</h3>
+          <span id="param-stats" class="text-xs font-mono text-slate-400"></span>
+        </div>
+        <!-- main pipe -->
+        <div class="rounded-xl bg-controldeep border border-pipe p-4 sm:p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="h-3 flex-1 rounded-full pipe-line"></div>
+            <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 shrink-0">inlet</span>
+          </div>
+          <div id="valve-list" class="space-y-3"></div>
+          <!-- add valve -->
+          <div class="mt-4 pt-4 border-t border-dashed border-pipe">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="new-key" type="text" placeholder="param name" class="tool-input rounded-lg px-3 py-2 text-sm font-mono flex-1">
+              <input id="new-value" type="text" placeholder="param value" class="tool-input rounded-lg px-3 py-2 text-sm font-mono flex-1">
+              <button id="btn-add-param" class="px-4 py-2 rounded-lg text-sm font-semibold bg-mint-400/10 text-mint-400 border border-mint-400/40 hover:bg-mint-400/20 transition shrink-0">+ Add valve</button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 mt-4">
+            <div class="h-3 flex-1 rounded-full pipe-line"></div>
+            <span class="text-[10px] font-mono uppercase tracking-widest text-slate-500 shrink-0">outlet</span>
+          </div>
+        </div>
+
+        <!-- live rebuild preview -->
+        <div class="mt-5 rounded-xl bg-controldeep border border-amber-500/40 overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-pipe flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Live rebuilt URL</span>
+            <button id="btn-copy-rebuilt" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-panel border border-pipe hover:border-amber-500/60 transition">Copy</button>
+          </div>
+          <div id="rebuilt-url" class="px-4 py-4 font-mono text-sm text-mint-400 break-all scroll-thin overflow-x-auto leading-relaxed"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Station 2: UTM auditor -->
+  <section id="auditor-station" class="bg-control rounded-2xl border border-pipe overflow-hidden">
+    <div class="px-5 sm:px-7 py-5 border-b border-pipe flex items-center gap-3">
+      <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500 text-controldeep font-bold text-sm">2</span>
+      <div>
+        <h2 class="text-lg font-bold text-white">UTM Link Auditor</h2>
+        <p class="text-xs text-slate-400">Paste a campaign URL — the auditor checks your UTM tags and flags mistakes in plain English.</p>
+      </div>
+    </div>
+    <div class="p-5 sm:p-7 space-y-5">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input id="audit-input" type="text" spellcheck="false" placeholder="Paste a campaign URL to audit its UTM tags"
+          class="tool-input flex-1 rounded-xl px-4 py-3 text-sm font-mono">
+        <button id="btn-audit" class="px-5 py-3 rounded-xl text-sm font-bold bg-amber-500 text-controldeep hover:bg-amber-400 transition shrink-0">Audit Link</button>
+      </div>
+      <p class="text-xs text-slate-500">Tip: audit the link you just parsed above — <button id="btn-audit-current" class="text-amber-400 underline underline-offset-2 hover:text-amber-300">use current pipeline URL</button>.</p>
+      <p id="audit-msg" class="hidden text-sm rounded-xl px-4 py-3"></p>
+      <div id="audit-results" class="hidden space-y-4">
+        <div class="rounded-xl bg-controldeep border border-pipe p-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-widest text-slate-400">UTM Health Score</span>
+            <span id="audit-score-num" class="text-2xl font-bold font-mono text-white">0</span>
+          </div>
+          <div class="h-3 rounded-full bg-panel overflow-hidden">
+            <div id="audit-score-bar" class="gauge-bar h-full rounded-full" style="width:0%; background:#4ADE80"></div>
+          </div>
+        </div>
+        <div id="audit-issues" class="space-y-2.5"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Station 3: UTM preset builder -->
+  <section id="preset-station" class="bg-control rounded-2xl border border-pipe overflow-hidden">
+    <div class="px-5 sm:px-7 py-5 border-b border-pipe flex items-center gap-3">
+      <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500 text-controldeep font-bold text-sm">3</span>
+      <div>
+        <h2 class="text-lg font-bold text-white">UTM Preset Builder</h2>
+        <p class="text-xs text-slate-400">Pick a preset or build your own. Guardrails warn you the moment a value breaks UTM conventions.</p>
+      </div>
+    </div>
+    <div class="p-5 sm:p-7 space-y-5">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <select id="preset-select" class="tool-input flex-1 rounded-xl px-4 py-3 text-sm"></select>
+        <button id="btn-delete-preset" class="px-4 py-3 rounded-xl text-sm font-semibold bg-panel border border-pipe text-red-400 hover:border-red-500/60 transition shrink-0">Delete</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" for="p-name">Preset name</label>
+          <input id="p-name" type="text" placeholder="e.g. Black Friday Email Blast" class="tool-input w-full rounded-xl px-4 py-2.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" for="p-source">utm_source <span class="text-red-400">*</span></label>
+          <input id="p-source" type="text" placeholder="e.g. newsletter" class="tool-input w-full rounded-xl px-4 py-2.5 text-sm font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" for="p-medium">utm_medium <span class="text-red-400">*</span></label>
+          <input id="p-medium" type="text" list="medium-list" placeholder="e.g. email" class="tool-input w-full rounded-xl px-4 py-2.5 text-sm font-mono">
+          <datalist id="medium-list">
+            <option value="organic"></option><option value="cpc"></option><option value="paid"></option>
+            <option value="referral"></option><option value="email"></option><option value="social"></option>
+            <option value="display"></option><option value="affiliate"></option><option value="video"></option>
+            <option value="newsletter"></option><option value="sms"></option><option value="push"></option>
+          </datalist>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" for="p-campaign">utm_campaign <span class="text-red-400">*</span></label>
+          <input id="p-campaign" type="text" placeholder="e.g. black-friday-2026" class="tool-input w-full rounded-xl px-4 py-2.5 text-sm font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" for="p-term">utm_term <span class="text-slate-500">(optional)</span></label>
+          <input id="p-term" type="text" placeholder="paid keyword" class="tool-input w-full rounded-xl px-4 py-2.5 text-sm font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" for="p-content">utm_content <span class="text-slate-500">(optional)</span></label>
+          <input id="p-content" type="text" placeholder="ad variant" class="tool-input w-full rounded-xl px-4 py-2.5 text-sm font-mono">
+        </div>
+      </div>
+
+      <div id="preset-guardrails" class="hidden space-y-2"></div>
+
+      <div id="preset-preview-wrap" class="hidden rounded-xl bg-controldeep border border-mint-400/40 overflow-hidden">
+        <div class="px-4 py-2.5 border-b border-pipe flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-widest text-mint-400">Tagged link preview</span>
+          <button id="btn-copy-preset-url" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-panel border border-pipe hover:border-mint-400/60 transition">Copy</button>
+        </div>
+        <div id="preset-preview" class="px-4 py-4 font-mono text-sm text-mint-400 break-all leading-relaxed"></div>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button id="btn-apply-preset" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-amber-500 text-controldeep hover:bg-amber-400 transition">Apply to pipeline valves</button>
+        <button id="btn-save-preset" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-panel border border-pipe hover:border-amber-500/60 transition">Save as my preset</button>
+      </div>
+
+      <div class="rounded-xl bg-controldeep border border-pipe p-4">
+        <h3 class="text-sm font-bold text-white mb-3">Build a fresh tagged link from a landing page</h3>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input id="preset-base" type="text" spellcheck="false" placeholder="Landing page, e.g. https://example.com/pricing" class="tool-input flex-1 rounded-xl px-4 py-2.5 text-sm font-mono">
+          <button id="btn-build-tagged" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-mint-400 text-controldeep hover:bg-green-300 transition shrink-0">Build tagged link</button>
+        </div>
+        <div id="tagged-result" class="hidden mt-3 rounded-xl bg-panel border border-pipe p-3 font-mono text-sm text-mint-400 break-all"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Station 4: Export -->
+  <section id="export-station" class="bg-control rounded-2xl border border-pipe overflow-hidden">
+    <div class="px-5 sm:px-7 py-5 border-b border-pipe flex items-center gap-3">
+      <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500 text-controldeep font-bold text-sm">4</span>
+      <div>
+        <h2 class="text-lg font-bold text-white">Parameter Export</h2>
+        <p class="text-xs text-slate-400">Export the parsed parameters as JSON or CSV — copy to clipboard or download a file.</p>
+      </div>
+    </div>
+    <div class="p-5 sm:p-7 space-y-4">
+      <label class="inline-flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+        <input id="export-enabled-only" type="checkbox" checked class="w-4 h-4 accent-amber-500">
+        Export only open valves (skip closed ones)
+      </label>
+      <div class="flex flex-wrap gap-2">
+        <button id="btn-exp-json" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-panel border border-pipe hover:border-amber-500/60 transition">Preview JSON</button>
+        <button id="btn-exp-csv" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-panel border border-pipe hover:border-amber-500/60 transition">Preview CSV</button>
+        <button id="btn-copy-export" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-panel border border-pipe hover:border-amber-500/60 transition">Copy</button>
+        <button id="btn-dl-json" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-amber-500 text-controldeep hover:bg-amber-400 transition">Download JSON</button>
+        <button id="btn-dl-csv" class="px-4 py-2.5 rounded-xl text-sm font-bold bg-mint-400 text-controldeep hover:bg-green-300 transition">Download CSV</button>
+      </div>
+      <textarea id="export-preview" readonly rows="8" spellcheck="false" placeholder="Parse a URL above, then preview an export here…"
+        class="tool-input w-full rounded-xl px-4 py-3 text-xs font-mono scroll-thin"></textarea>
+      <p id="export-msg" class="hidden text-sm"></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- BOTTOM AD -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SEO ARTICLE ============ -->
+<article id="seo-article" class="mx-auto max-w-6xl px-4 sm:px-6 pb-4">
+  <div class="bg-control rounded-2xl border border-pipe p-6 sm:p-10 prose-headings:text-white max-w-none">
+    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6">The Complete Guide to URL Parsing, UTM Building, and UTM Link Checking</h2>
+
+    <p class="text-slate-300 mb-4 leading-relaxed">Every link you click carries hidden machinery. Behind the visible page address sits a query string — a chain of key-value pairs that tells websites who you are, where you came from, and what you clicked. Marketers call these <strong class="text-white">UTM parameters</strong>, and developers call the whole thing a <strong class="text-white">query string</strong>. Whether you are a marketer tagging campaign links, a developer debugging an integration, or an analyst cleaning up tracking data, a reliable <strong class="text-white">URL parser</strong> is one of the most useful tools in your kit. QueryKit was built to be exactly that: a free, in-browser control room where every query parameter becomes a valve you can open, close, inspect, and rebuild.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">What is a URL parser?</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">A URL has several parts: the protocol (<code class="text-amber-400 font-mono text-sm">https://</code>), the host (<code class="text-amber-400 font-mono text-sm">example.com</code>), the path (<code class="text-amber-400 font-mono text-sm">/sale</code>), and then — after the question mark — the query string. A URL parser splits that query string at every ampersand and equals sign and shows you each parameter as a separate, editable row. Instead of squinting at a 300-character link, you see a clean list: <code class="text-amber-400 font-mono text-sm">utm_source = newsletter</code>, <code class="text-amber-400 font-mono text-sm">utm_medium = email</code>, <code class="text-amber-400 font-mono text-sm">utm_campaign = black-friday</code>, and so on.</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">QueryKit takes this one step further with its valve pipeline. Each parsed parameter is rendered as a valve in a pipe. Twist a valve open and the parameter stays in the rebuilt URL; twist it closed and the parameter is dropped — instantly, with a live preview of the resulting link. This is enormously practical: strip <code class="text-amber-400 font-mono text-sm">gclid</code>, <code class="text-amber-400 font-mono text-sm">fbclid</code>, and <code class="text-amber-400 font-mono text-sm">msclkid</code> click IDs before sharing a link, remove a stale <code class="text-amber-400 font-mono text-sm">ref</code> parameter before re-running a campaign, or temporarily disable a parameter to test how a page behaves without it. You can also edit values inline or add new valves entirely, and the rebuilt URL updates on every keystroke.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">What are UTM parameters and why do they matter?</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">UTM stands for Urchin Tracking Module, named after the Urchin Software company that Google acquired in 2005. UTM parameters are five standardized query parameters that marketers append to URLs so analytics platforms — Google Analytics, Mixpanel, Amplitude, and others — can attribute traffic to the right source. They are the reason a marketing team knows that 4,200 visitors came from the October newsletter and not from organic search.</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">The five parameters are: <strong class="text-white">utm_source</strong> (where the traffic came from: <code class="text-amber-400 font-mono text-sm">google</code>, <code class="text-amber-400 font-mono text-sm">newsletter</code>, <code class="text-amber-400 font-mono text-sm">instagram</code>), <strong class="text-white">utm_medium</strong> (the marketing channel: <code class="text-amber-400 font-mono text-sm">cpc</code>, <code class="text-amber-400 font-mono text-sm">email</code>, <code class="text-amber-400 font-mono text-sm">social</code>), <strong class="text-white">utm_campaign</strong> (the specific promotion: <code class="text-amber-400 font-mono text-sm">black-friday-2026</code>), <strong class="text-white">utm_term</strong> (the paid-search keyword, optional), and <strong class="text-white">utm_content</strong> (which tells apart two links in the same campaign, e.g. <code class="text-amber-400 font-mono text-sm">hero-banner</code> vs <code class="text-amber-400 font-mono text-sm">footer-link</code>). Of these, source, medium, and campaign are effectively required — without all three, your reports lose the ability to answer "which campaign on which channel drove this traffic?"</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">Why you need a UTM link checker</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">Tagging links by hand is error-prone, and the errors are expensive because they corrupt your analytics silently. The most common mistakes QueryKit's auditor catches are: <strong class="text-white">missing parameters</strong> (a link with utm_source and utm_medium but no utm_campaign cannot be tied to a promotion), <strong class="text-white">spaces in values</strong> (a value like <code class="text-amber-400 font-mono text-sm">Summer Sale</code> gets URL-encoded into <code class="text-amber-400 font-mono text-sm">Summer%20Sale</code>, and some tools report the encoded and unencoded versions as different campaigns), <strong class="text-white">uppercase letters</strong> (<code class="text-amber-400 font-mono text-sm">Email</code> and <code class="text-amber-400 font-mono text-sm">email</code> are treated as two different mediums by every major analytics platform, splitting one channel into two rows), and <strong class="text-white">non-standard medium values</strong> (using <code class="text-amber-400 font-mono text-sm">banner_ad</code> instead of <code class="text-amber-400 font-mono text-sm">display</code> fragments your channel grouping).</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">A good UTM link checker does not just say "wrong" — it explains the problem in plain English and tells you exactly how to fix it. That is the design philosophy of QueryKit's auditor. Paste any campaign URL and you get a 0–100 UTM health score plus a list of issues, each with a title, a plain-English explanation of why it matters, and a concrete fix (often with the corrected value pre-computed). The auditor also spots duplicate UTM keys, mixed casing across your three required parameters, and leftover click IDs like <code class="text-amber-400 font-mono text-sm">gclid</code> that ad platforms append automatically and that are safe to strip before you share a link publicly.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">UTM naming conventions that keep reports clean</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">Conventions are the difference between analytics you can trust and a spreadsheet full of near-duplicates. The industry-standard rules are simple: <strong class="text-white">always lowercase</strong> (pick lowercase once and never deviate), <strong class="text-white">never use spaces</strong> (use hyphens or underscores — hyphens are more readable in reports), <strong class="text-white">be consistent with medium values</strong> (agree on one spelling per channel across your whole team: <code class="text-amber-400 font-mono text-sm">email</code>, not a mix of <code class="text-amber-400 font-mono text-sm">email</code>, <code class="text-amber-400 font-mono text-sm">e-mail</code>, and <code class="text-amber-400 font-mono text-sm">newsletter</code> as a medium), and <strong class="text-white">keep campaigns descriptive but compact</strong> (<code class="text-amber-400 font-mono text-sm">black-friday-2026</code> beats <code class="text-amber-400 font-mono text-sm">bf</code> and also beats a forty-character sentence).</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">For utm_medium specifically, there is a widely used standard vocabulary: <code class="text-amber-400 font-mono text-sm">organic</code> for unpaid search, <code class="text-amber-400 font-mono text-sm">cpc</code> or <code class="text-amber-400 font-mono text-sm">paid</code> for paid search and ads, <code class="text-amber-400 font-mono text-sm">referral</code> for links on other sites, <code class="text-amber-400 font-mono text-sm">email</code> for email marketing, <code class="text-amber-400 font-mono text-sm">social</code> for organic social, <code class="text-amber-400 font-mono text-sm">display</code> for banner ads, <code class="text-amber-400 font-mono text-sm">affiliate</code> for partner links, and <code class="text-amber-400 font-mono text-sm">video</code> for video placements. QueryKit's preset builder has these guardrails built in: the moment you type a non-standard medium or an uppercase value, it warns you before the link ever ships.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">How the UTM preset builder saves you from yourself</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">Teams that tag dozens of links a week should never type UTM values from scratch each time. A <strong class="text-white">UTM builder</strong> with presets solves this: define a named preset once — say "Google Search Ads" with source <code class="text-amber-400 font-mono text-sm">google</code>, medium <code class="text-amber-400 font-mono text-sm">cpc</code>, and a campaign template — and then apply it to any URL in one click. QueryKit ships with three starter presets (Google Search Ads, Email Newsletter, Social Organic) and lets you save unlimited custom presets in your browser.</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">The key word is guardrails. Presets are only as good as the values inside them, so QueryKit validates every preset the moment you edit it: required fields are enforced, spaces trigger errors, uppercase triggers warnings, and non-standard mediums get flagged with a suggestion. You can apply a preset to the valves you already parsed (it cleanly replaces any existing utm_* parameters) or build a brand-new tagged link by pasting a landing page and hitting "Build tagged link". The result is a correctly encoded, convention-compliant campaign URL every time.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">Parsing URLs as a developer or analyst</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">Marketers are not the only audience. Developers debugging OAuth callbacks, webhook payloads, or deep links constantly need to read query strings. Analysts auditing a site's tracking implementation need to extract every parameter from dozens of URLs. QueryKit's export station serves both: one click copies or downloads the parsed parameters as <strong class="text-white">JSON</strong> (structured, ready for scripts and APIs) or <strong class="text-white">CSV</strong> (opens directly in Excel or Google Sheets). You can choose to export only the open valves, so parameters you closed during cleanup are excluded automatically.</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">Because everything runs locally in your browser, there is a privacy benefit worth stating plainly: your URLs are never sent to a server. Campaign links often contain sensitive information — internal campaign names, partner identifiers, test parameters — and pasting them into a random online tool means handing that data to a stranger's server logs. QueryKit parses, audits, builds, and exports entirely on your device. Nothing leaves the page.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">A practical workflow: audit, fix, rebuild</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">Here is how the four stations work together in a real session. First, paste a campaign link into the parser and hit Parse URL — the link breaks into valves. Second, run the same link through the UTM auditor and read the health score; suppose it flags <code class="text-amber-400 font-mono text-sm">utm_medium=Email</code> as uppercase and <code class="text-amber-400 font-mono text-sm">utm_campaign=Summer Sale</code> as containing spaces. Third, fix them: either edit the valve values directly in the pipeline or apply a clean preset, which replaces the broken UTM values in one click. Fourth, watch the live rebuilt URL update, copy it, and export the final parameter set as CSV for your campaign tracker. What used to be a careful manual rewrite in a text editor — with a real risk of breaking the URL's encoding — becomes a two-minute guided process.</p>
+
+    <h3 class="text-xl font-bold text-white mt-8 mb-3">Common questions about query strings, answered</h3>
+    <p class="text-slate-300 mb-4 leading-relaxed">Does the order of query parameters matter? For UTM tracking, no — analytics reads them by name. For some APIs and signed URLs, yes, so QueryKit preserves the original order and keeps your valves in the sequence they arrived. Do special characters need encoding? Yes: spaces, ampersands, question marks, and non-ASCII characters inside a value must be percent-encoded, and QueryKit's rebuilt URLs are always properly encoded. Can a URL have the same parameter twice? Technically yes, and the auditor will warn you about duplicate UTM keys since analytics tools typically read only the first occurrence. What about the fragment (the part after #)? QueryKit parses it separately and reattaches it at the end of the rebuilt URL, so deep links and single-page-app routes survive the round trip.</p>
+    <p class="text-slate-300 mb-4 leading-relaxed">Whether you came here searching for a URL parser, a UTM builder, or a UTM link checker, the goal is the same: links you can trust. Clean parameters mean clean attribution, clean attribution means honest reports, and honest reports mean better marketing decisions. QueryKit puts the whole pipeline — parse, audit, build, export — behind one free page with no account and no tracking of its own. Open a valve, close a valve, and ship links with confidence.</p>
+  </div>
+
+  <!-- FAQs -->
+  <div class="bg-control rounded-2xl border border-pipe p-6 sm:p-10 mt-8">
+    <h2 class="text-2xl font-bold text-white mb-6">Frequently Asked Questions</h2>
+    <div class="space-y-5">
+      <div>
+        <h3 class="font-bold text-white mb-1.5">What does the QueryKit URL parser do?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">Paste any URL and QueryKit splits its query string into individual parameters, each shown as a toggleable valve. You can edit values, add or remove parameters, close valves to drop them from the link, and copy the live-rebuilt URL — with proper percent-encoding handled automatically.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-1.5">What are UTM parameters and why do they matter?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">UTM parameters (utm_source, utm_medium, utm_campaign, plus optional utm_term and utm_content) are standardized tags appended to URLs so analytics platforms can attribute traffic to the right source, channel, and campaign. Without them, you cannot tell whether visitors came from your newsletter, your ads, or organic social.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-1.5">What is a good utm_medium value?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">Use the standard vocabulary: organic, cpc, paid, referral, email, social, display, affiliate, video, or newsletter. Standard values keep your channel reports grouped correctly. QueryKit's auditor and preset guardrails flag non-standard mediums and suggest the closest standard alternative.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-1.5">Should UTM values be lowercase?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">Yes — always. UTM values are case-sensitive, so "Email" and "email" appear as two separate mediums in your reports. Use lowercase everywhere and replace spaces with hyphens (e.g. black-friday-2026). QueryKit warns you whenever a value breaks these conventions.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-1.5">Does QueryKit send my URLs to a server?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">No. Everything — parsing, auditing, preset building, and exporting — runs entirely in your browser using JavaScript. Your URLs never leave your device, which makes QueryKit safe for internal campaign links and sensitive tracking URLs.</p>
+      </div>
+      <div>
+        <h3 class="font-bold text-white mb-1.5">Can I export the parsed parameters?</h3>
+        <p class="text-slate-400 text-sm leading-relaxed">Yes. The export station lets you copy or download the parameters as JSON (for scripts and APIs) or CSV (for Excel and Google Sheets). You can export all parameters or only the open valves, so anything you closed during cleanup is excluded automatically.</p>
+      </div>
+    </div>
+  </div>
+</article>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What does the QueryKit URL parser do?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Paste any URL and QueryKit splits its query string into individual parameters, each shown as a toggleable valve. You can edit values, add or remove parameters, close valves to drop them from the link, and copy the live-rebuilt URL with proper percent-encoding." }
+    },
+    {
+      "@type": "Question",
+      "name": "What are UTM parameters and why do they matter?",
+      "acceptedAnswer": { "@type": "Answer", "text": "UTM parameters (utm_source, utm_medium, utm_campaign, plus optional utm_term and utm_content) are standardized tags appended to URLs so analytics platforms can attribute traffic to the right source, channel, and campaign." }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good utm_medium value?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Use the standard vocabulary: organic, cpc, paid, referral, email, social, display, affiliate, video, or newsletter. Standard values keep your channel reports grouped correctly." }
+    },
+    {
+      "@type": "Question",
+      "name": "Should UTM values be lowercase?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, always. UTM values are case-sensitive, so Email and email appear as two separate mediums in reports. Use lowercase everywhere and replace spaces with hyphens." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does QueryKit send my URLs to a server?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Everything runs entirely in your browser using JavaScript. Your URLs never leave your device." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I export the parsed parameters?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Export the parameters as JSON or CSV, copied to clipboard or downloaded, optionally limited to only the open valves." }
+    }
+  ]
+}
+</script>
+
+<footer class="border-t border-pipe mt-4">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <span class="text-white font-bold">Query<span class="text-amber-500">Kit</span></span>
+    <p class="text-xs text-slate-500">Free URL parser, UTM builder &amp; UTM link checker. Unlimited free usage — no signup, no paywall.</p>
+    <a href="https://fixoraa.tech" class="text-xs text-slate-400 hover:text-amber-400 transition">More Tools</a>
+  </div>
+</footer>
+
+<!-- ============ LIB (inlined at build time) ============ -->
+<script id="querykit-url-parser-utm-builder-lib">
+
+/* QueryKit — URL Parser + UTM Builder
+ * Core logic: PURE functions only. No DOM, no window, no document,
+ * no localStorage, no navigator. Top-level function declarations only
+ * so the test harness can eval this via `new Function`.
+ */
+
+var UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+
+var STANDARD_MEDIUMS = [
+  'organic', 'cpc', 'ppc', 'paid', 'referral', 'email', 'social',
+  'display', 'affiliate', 'video', 'audio', 'none', 'banner',
+  'newsletter', 'sms', 'push', 'qr', 'print', 'ooh', 'podcast',
+  'webinar', 'influencer', 'retargeting', 'pr', 'partnership'
+];
+
+function qkDecode(s) {
+  try {
+    return decodeURIComponent(String(s).replace(/\+/g, ' '));
+  } catch (e) {
+    return String(s);
+  }
+}
+
+function qkEncode(s) {
+  return encodeURIComponent(String(s));
+}
+
+function isBlank(str) {
+  return !str || !String(str).trim();
+}
+
+/* Parse a full URL into { base, fragment, params[] }.
+ * Each param: { key, value, enabled }.
+ * Never throws — returns { ok:false, error } on bad input. */
+function parseUrl(raw) {
+  if (isBlank(raw)) {
+    return { ok: false, base: '', fragment: '', params: [], error: 'Please paste a URL to parse.' };
+  }
+  var url = String(raw).trim();
+  var hashIdx = url.indexOf('#');
+  var fragment = '';
+  if (hashIdx !== -1) {
+    fragment = url.slice(hashIdx);
+    url = url.slice(0, hashIdx);
+  }
+  var qIdx = url.indexOf('?');
+  var base = qIdx === -1 ? url : url.slice(0, qIdx);
+  var qs = qIdx === -1 ? '' : url.slice(qIdx + 1);
+  if (!base) {
+    return { ok: false, base: '', fragment: '', params: [], error: 'That URL looks invalid — no base address found.' };
+  }
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(base) && !/^[^/?#]+\.[^/?#]+/.test(base)) {
+    // allow scheme-less domains like example.com/page
+  }
+  var params = [];
+  if (qs) {
+    var pairs = qs.split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      var pair = pairs[i];
+      if (!pair) continue;
+      var eq = pair.indexOf('=');
+      var k = eq === -1 ? pair : pair.slice(0, eq);
+      var v = eq === -1 ? '' : pair.slice(eq + 1);
+      params.push({ key: qkDecode(k), value: qkDecode(v), enabled: true });
+    }
+  }
+  return { ok: true, base: base, fragment: fragment, params: params, error: null };
+}
+
+/* Rebuild a URL from base + params. Only enabled params are kept.
+ * A valve toggled "off" drops its param from the output. */
+function rebuildUrl(base, params, fragment) {
+  var parts = [];
+  for (var i = 0; i < (params || []).length; i++) {
+    var p = params[i];
+    if (!p || p.enabled === false) continue;
+    if (isBlank(p.key)) continue;
+    parts.push(qkEncode(p.key.trim()) + '=' + qkEncode(p.value == null ? '' : p.value));
+  }
+  var out = String(base || '');
+  if (parts.length) out += '?' + parts.join('&');
+  if (fragment) out += fragment;
+  return out;
+}
+
+/* Toggle one valve (param enabled flag). Returns a NEW array. */
+function toggleParam(params, index) {
+  var next = (params || []).map(function (p) { return { key: p.key, value: p.value, enabled: p.enabled !== false }; });
+  if (index >= 0 && index < next.length) next[index].enabled = !next[index].enabled;
+  return next;
+}
+
+function setParamEnabled(params, index, enabled) {
+  var next = (params || []).map(function (p) { return { key: p.key, value: p.value, enabled: p.enabled !== false }; });
+  if (index >= 0 && index < next.length) next[index].enabled = !!enabled;
+  return next;
+}
+
+function addParam(params, key, value) {
+  var next = (params || []).map(function (p) { return { key: p.key, value: p.value, enabled: p.enabled !== false }; });
+  if (isBlank(key)) return { ok: false, params: next, error: 'Parameter name cannot be empty.' };
+  next.push({ key: String(key).trim(), value: value == null ? '' : String(value), enabled: true });
+  return { ok: true, params: next, error: null };
+}
+
+function editParam(params, index, key, value) {
+  var next = (params || []).map(function (p) { return { key: p.key, value: p.value, enabled: p.enabled !== false }; });
+  if (index < 0 || index >= next.length) return { ok: false, params: next, error: 'Parameter not found.' };
+  if (isBlank(key)) return { ok: false, params: next, error: 'Parameter name cannot be empty.' };
+  next[index] = { key: String(key).trim(), value: value == null ? '' : String(value), enabled: next[index].enabled };
+  return { ok: true, params: next, error: null };
+}
+
+function removeParam(params, index) {
+  var next = [];
+  for (var i = 0; i < (params || []).length; i++) {
+    if (i !== index) next.push({ key: params[i].key, value: params[i].value, enabled: params[i].enabled !== false });
+  }
+  return next;
+}
+
+/* ---- UTM auditing ---- */
+
+function findParam(params, key) {
+  for (var i = 0; i < (params || []).length; i++) {
+    if (params[i] && params[i].key === key && params[i].enabled !== false) return params[i];
+  }
+  return null;
+}
+
+function countKey(params, key) {
+  var n = 0;
+  for (var i = 0; i < (params || []).length; i++) {
+    if (params[i] && params[i].key === key && params[i].enabled !== false) n++;
+  }
+  return n;
+}
+
+/* Audit UTM params. Returns { ok, issues[], score }.
+ * issue: { level:'error'|'warn'|'pass', code, message, fix } */
+function auditUtm(params) {
+  var issues = [];
+  var enabled = (params || []).filter(function (p) { return p && p.enabled !== false; });
+
+  function checkPresence(key, label) {
+    var p = findParam(enabled, key);
+    if (!p) {
+      issues.push({
+        level: 'error', code: 'missing-' + key,
+        message: label + ' is missing. Without it, your analytics cannot attribute this traffic.',
+        fix: 'Add ' + key + '=your_value to the URL, or build it with the UTM preset builder below.'
+      });
+      return null;
+    }
+    return p;
+  }
+
+  var src = checkPresence('utm_source', 'utm_source');
+  var med = checkPresence('utm_medium', 'utm_medium');
+  var cmp = checkPresence('utm_campaign', 'utm_campaign');
+
+  function checkValue(p, label) {
+    if (!p) return;
+    var v = p.value || '';
+    if (!v.trim()) {
+      issues.push({
+        level: 'error', code: 'empty-' + p.key,
+        message: label + ' is present but empty.',
+        fix: 'Give it a descriptive value, e.g. utm_source=newsletter instead of a blank value.'
+      });
+      return;
+    }
+    if (/\s/.test(v)) {
+      issues.push({
+        level: 'error', code: 'spaces-' + p.key,
+        message: label + ' contains spaces ("' + v + '"). Spaces break URLs and split one campaign into several rows in reports.',
+        fix: 'Replace spaces with hyphens or underscores: "' + v.replace(/\s+/g, '-').toLowerCase() + '".'
+      });
+    }
+    if (/[A-Z]/.test(v)) {
+      issues.push({
+        level: 'warn', code: 'case-' + p.key,
+        message: label + ' uses uppercase letters ("' + v + '"). UTM values are case-sensitive, so "Email" and "email" show as two different sources.',
+        fix: 'Use all-lowercase: "' + v.toLowerCase().replace(/\s+/g, '-') + '".'
+      });
+    }
+  }
+
+  checkValue(src, 'utm_source');
+  checkValue(med, 'utm_medium');
+  checkValue(cmp, 'utm_campaign');
+
+  if (med && med.value && STANDARD_MEDIUMS.indexOf(med.value.toLowerCase()) === -1) {
+    issues.push({
+      level: 'warn', code: 'nonstandard-medium',
+      message: 'utm_medium="' + med.value + '" is not a standard medium. Non-standard mediums fragment your channel reports.',
+      fix: 'Prefer a standard medium such as cpc, paid, email, social, referral, display, organic, affiliate or video.'
+    });
+  }
+
+  // case-consistency across the three required params
+  var vals = [src, med, cmp].filter(Boolean).map(function (p) { return p.value || ''; });
+  var anyUpper = vals.some(function (v) { return /[A-Z]/.test(v); });
+  var anyLower = vals.some(function (v) { return /[a-z]/.test(v); });
+  if (anyUpper && anyLower) {
+    issues.push({
+      level: 'warn', code: 'inconsistent-case',
+      message: 'Mixed casing across your UTM values. Mixed case is the most common cause of duplicate campaign rows in analytics.',
+      fix: 'Pick one convention — lowercase everywhere is the industry standard.'
+    });
+  }
+
+  // duplicate utm keys
+  UTM_KEYS.forEach(function (key) {
+    if (countKey(enabled, key) > 1) {
+      issues.push({
+        level: 'warn', code: 'duplicate-' + key,
+        message: key + ' appears ' + countKey(enabled, key) + ' times. Analytics usually reads only the first occurrence.',
+        fix: 'Keep a single ' + key + ' and remove the duplicates.'
+      });
+    }
+  });
+
+  // click ids / suspicious tracking junk
+  ['gclid', 'fbclid', 'msclkid', 'ttclid'].forEach(function (junk) {
+    if (findParam(enabled, junk)) {
+      issues.push({
+        level: 'warn', code: 'clickid-' + junk,
+        message: 'The URL contains a ' + junk + ' click ID. These are auto-added by ad platforms and are safe to strip when sharing.',
+        fix: 'Close the ' + junk + ' valve to remove it from the rebuilt link.'
+      });
+    }
+  });
+
+  if (!issues.length) {
+    issues.push({
+      level: 'pass', code: 'all-good',
+      message: 'All required UTM parameters are present and follow naming conventions.',
+      fix: ''
+    });
+  }
+
+  var errors = issues.filter(function (i) { return i.level === 'error'; }).length;
+  var warns = issues.filter(function (i) { return i.level === 'warn'; }).length;
+  var score = Math.max(0, 100 - errors * 25 - warns * 8);
+  return { ok: errors === 0, issues: issues, score: score };
+}
+
+/* ---- Presets ---- */
+
+function defaultPresets() {
+  return [
+    { name: 'Google Search Ads', source: 'google', medium: 'cpc', campaign: 'brand-search-q3', term: '', content: '' },
+    { name: 'Email Newsletter', source: 'newsletter', medium: 'email', campaign: 'weekly-digest', term: '', content: '' },
+    { name: 'Social Organic', source: 'instagram', medium: 'social', campaign: 'product-launch', term: '', content: '' }
+  ];
+}
+
+/* Guardrails for a preset. Returns { ok, warnings[] }.
+ * warning: { level:'error'|'warn', field, message } */
+function validatePreset(preset) {
+  var warnings = [];
+  preset = preset || {};
+  var name = String(preset.name || '').trim();
+  var source = String(preset.source || '').trim();
+  var medium = String(preset.medium || '').trim();
+  var campaign = String(preset.campaign || '').trim();
+
+  if (!name) warnings.push({ level: 'warn', field: 'name', message: 'Give this preset a name so you can find it later.' });
+  if (!source) {
+    warnings.push({ level: 'error', field: 'source', message: 'utm_source is required — it identifies where the traffic came from.' });
+  } else {
+    if (/\s/.test(source)) warnings.push({ level: 'error', field: 'source', message: 'Source contains spaces. Use hyphens or underscores instead.' });
+    if (/[A-Z]/.test(source)) warnings.push({ level: 'warn', field: 'source', message: 'Source has uppercase letters. Lowercase keeps reports consistent.' });
+  }
+  if (!medium) {
+    warnings.push({ level: 'error', field: 'medium', message: 'utm_medium is required — it identifies the marketing channel.' });
+  } else if (STANDARD_MEDIUMS.indexOf(medium.toLowerCase()) === -1) {
+    warnings.push({ level: 'warn', field: 'medium', message: '"' + medium + '" is not a standard medium. Standard values (cpc, email, social…) keep channel reports clean.' });
+  }
+  if (!campaign) {
+    warnings.push({ level: 'error', field: 'campaign', message: 'utm_campaign is required — it identifies the specific promotion.' });
+  } else {
+    if (/\s/.test(campaign)) warnings.push({ level: 'error', field: 'campaign', message: 'Campaign contains spaces. Use hyphens or underscores instead.' });
+    if (/[A-Z]/.test(campaign)) warnings.push({ level: 'warn', field: 'campaign', message: 'Campaign has uppercase letters. Lowercase keeps reports consistent.' });
+  }
+  ['term', 'content'].forEach(function (f) {
+    var v = String(preset[f] || '').trim();
+    if (v && /\s/.test(v)) warnings.push({ level: 'error', field: f, message: 'utm_' + f + ' contains spaces. Use hyphens or underscores instead.' });
+    if (v && /[A-Z]/.test(v)) warnings.push({ level: 'warn', field: f, message: 'utm_' + f + ' has uppercase letters. Lowercase keeps reports consistent.' });
+  });
+
+  var hasError = warnings.some(function (w) { return w.level === 'error'; });
+  return { ok: !hasError, warnings: warnings };
+}
+
+/* Merge a preset's UTM values into a param list (replaces existing utm_*).
+ * Returns { params, warnings }. */
+function applyPresetToParams(params, preset) {
+  var validation = validatePreset(preset);
+  var next = (params || []).filter(function (p) {
+    return UTM_KEYS.indexOf(p.key) === -1;
+  }).map(function (p) { return { key: p.key, value: p.value, enabled: p.enabled !== false }; });
+  var map = {
+    utm_source: preset.source, utm_medium: preset.medium, utm_campaign: preset.campaign,
+    utm_term: preset.term, utm_content: preset.content
+  };
+  Object.keys(map).forEach(function (k) {
+    var v = String(map[k] || '').trim();
+    if (v) next.push({ key: k, value: v, enabled: true });
+  });
+  return { params: next, warnings: validation.warnings };
+}
+
+/* Build a full tagged URL from base + preset. */
+function buildUtmUrl(base, preset, fragment) {
+  var validation = validatePreset(preset);
+  var params = applyPresetToParams([], preset).params;
+  return { url: rebuildUrl(base, params, fragment || ''), warnings: validation.warnings };
+}
+
+/* ---- Export ---- */
+
+function paramStats(params) {
+  var list = params || [];
+  var enabled = list.filter(function (p) { return p.enabled !== false; }).length;
+  var utm = list.filter(function (p) { return p.enabled !== false && UTM_KEYS.indexOf(p.key) !== -1; }).length;
+  return { total: list.length, enabled: enabled, disabled: list.length - enabled, utmCount: utm };
+}
+
+function exportJson(params, enabledOnly) {
+  var list = (params || []).filter(function (p) {
+    return !enabledOnly || p.enabled !== false;
+  }).map(function (p) { return { key: p.key, value: p.value, enabled: p.enabled !== false }; });
+  return JSON.stringify(list, null, 2);
+}
+
+function csvCell(s) {
+  s = String(s == null ? '' : s);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function exportCsv(params, enabledOnly) {
+  var rows = ['key,value,enabled'];
+  (params || []).forEach(function (p) {
+    if (enabledOnly && p.enabled === false) return;
+    rows.push(csvCell(p.key) + ',' + csvCell(p.value) + ',' + (p.enabled === false ? 'false' : 'true'));
+  });
+  return rows.join('\n');
+}
+
+
+</script>
+
+<!-- ============ UI wiring ============ -->
+<script>
+(function () {
+  'use strict';
+
+  var state = { base: '', fragment: '', params: [], builtins: [], customs: [] };
+  var LS_KEY = 'querykit-custom-presets-v1';
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function showMsg(el, text, isError) {
+    el.textContent = text;
+    el.className = 'text-sm rounded-xl px-4 py-3 fade-in ' + (isError
+      ? 'bg-red-500/10 text-red-300 border border-red-500/40'
+      : 'bg-mint-400/10 text-mint-300 border border-mint-400/40');
+    el.classList.remove('hidden');
+  }
+  function hideMsg(el) { el.classList.add('hidden'); }
+  function flashCopy(btn, label) {
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(function () { btn.textContent = orig; }, 1400);
+  }
+  function copyText(text, btn) {
+    function done() { if (btn) flashCopy(btn); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- Station 1: parser / valves ---------- */
+
+  function renderValves() {
+    var list = $('valve-list');
+    var stats = paramStats(state.params);
+    $('param-stats').textContent = stats.enabled + ' open / ' + stats.total + ' total · ' + stats.utmCount + ' utm';
+    if (!state.params.length) {
+      list.innerHTML = '<p class="text-sm text-slate-500 text-center py-6">No query parameters found in this URL. Add one below to start the pipeline.</p>';
+    } else {
+      list.innerHTML = state.params.map(function (p, i) {
+        var open = p.enabled !== false;
+        var utm = UTM_KEYS.indexOf(p.key) !== -1;
+        return '' +
+        '<div class="valve-row fade-in flex items-center gap-3 rounded-xl bg-panel border ' + (open ? 'border-pipe' : 'border-pipe/60 opacity-70') + ' p-3">' +
+          '<div class="flex flex-col items-center gap-1 shrink-0 w-16">' +
+            '<button class="valve-knob ' + (open ? 'open' : 'closed') + ' w-11 h-11 rounded-full flex items-center justify-center" data-valve="' + i + '" aria-label="Toggle parameter ' + esc(p.key) + '" title="Open/close valve">' +
+              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="' + (open ? '#1B1F25' : '#9CA3AF') + '" stroke-width="2.4" stroke-linecap="round">' +
+                '<path d="M12 4v16M4 12h16"/>' +
+              '</svg>' +
+            '</button>' +
+            '<span class="text-[10px] font-bold tracking-widest ' + (open ? 'valve-status-open' : 'valve-status-closed') + '">' + (open ? 'OPEN' : 'CLOSED') + '</span>' +
+          '</div>' +
+          '<div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">' +
+            '<div class="relative">' +
+              (utm ? '<span class="absolute -top-2 left-2 text-[9px] font-bold uppercase tracking-wider bg-amber-500 text-controldeep px-1.5 rounded">utm</span>' : '') +
+              '<input type="text" value="' + esc(p.key) + '" data-key="' + i + '" spellcheck="false" class="tool-input w-full rounded-lg px-3 py-2 text-sm font-mono" aria-label="Parameter name">' +
+            '</div>' +
+            '<input type="text" value="' + esc(p.value) + '" data-val="' + i + '" spellcheck="false" placeholder="(empty)" class="tool-input w-full rounded-lg px-3 py-2 text-sm font-mono" aria-label="Parameter value">' +
+          '</div>' +
+          '<button class="shrink-0 w-9 h-9 rounded-lg bg-panel border border-pipe text-slate-500 hover:text-red-400 hover:border-red-500/60 transition" data-del="' + i + '" aria-label="Remove parameter" title="Remove">✕</button>' +
+        '</div>';
+      }).join('');
+    }
+    updatePreview();
+  }
+
+  function updatePreview() {
+    var url = rebuildUrl(state.base, state.params, state.fragment);
+    $('rebuilt-url').textContent = url || '—';
+  }
+
+  function doParse() {
+    var raw = $('url-input').value;
+    var res = parseUrl(raw);
+    if (!res.ok) {
+      showMsg($('parse-msg'), res.error, true);
+      $('pipeline-wrap').classList.add('hidden');
+      return;
+    }
+    hideMsg($('parse-msg'));
+    state.base = res.base;
+    state.fragment = res.fragment;
+    state.params = res.params;
+    $('pipeline-wrap').classList.remove('hidden');
+    renderValves();
+    $('pipeline-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  $('btn-parse').addEventListener('click', doParse);
+  $('url-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') doParse(); });
+  $('btn-sample').addEventListener('click', function () {
+    $('url-input').value = 'https://example.com/summer-sale?utm_source=Google Ads&utm_medium=Email Newsletter&utm_campaign=Summer Sale&gclid=EAIaIQobChMIabc123&ref=homepage#deals';
+    doParse();
+  });
+
+  $('valve-list').addEventListener('click', function (e) {
+    var t = e.target.closest('[data-valve]');
+    if (t) {
+      state.params = toggleParam(state.params, parseInt(t.getAttribute('data-valve'), 10));
+      renderValves();
+      return;
+    }
+    var d = e.target.closest('[data-del]');
+    if (d) {
+      state.params = removeParam(state.params, parseInt(d.getAttribute('data-del'), 10));
+      renderValves();
+    }
+  });
+
+  $('valve-list').addEventListener('input', function (e) {
+    var k = e.target.getAttribute('data-key');
+    var v = e.target.getAttribute('data-val');
+    if (k !== null) {
+      var r = editParam(state.params, parseInt(k, 10), e.target.value, state.params[parseInt(k, 10)].value);
+      if (r.ok) { state.params = r.params; updatePreview(); }
+      return;
+    }
+    if (v !== null) {
+      var idx = parseInt(v, 10);
+      var r2 = editParam(state.params, idx, state.params[idx].key, e.target.value);
+      if (r2.ok) { state.params = r2.params; updatePreview(); }
+    }
+  });
+
+  $('btn-add-param').addEventListener('click', function () {
+    var r = addParam(state.params, $('new-key').value, $('new-value').value);
+    if (!r.ok) {
+      var box = $('btn-add-param');
+      box.classList.add('warn-shake');
+      setTimeout(function () { box.classList.remove('warn-shake'); }, 350);
+      return;
+    }
+    state.params = r.params;
+    $('new-key').value = '';
+    $('new-value').value = '';
+    renderValves();
+  });
+
+  $('btn-copy-rebuilt').addEventListener('click', function () {
+    var url = rebuildUrl(state.base, state.params, state.fragment);
+    if (!url) return;
+    copyText(url, $('btn-copy-rebuilt'));
+  });
+
+  /* ---------- Station 2: auditor ---------- */
+
+  function renderAudit(issues, score) {
+    $('audit-score-num').textContent = score;
+    var bar = $('audit-score-bar');
+    bar.style.width = score + '%';
+    bar.style.background = score >= 80 ? '#4ADE80' : (score >= 50 ? '#F59E0B' : '#F87171');
+    $('audit-score-num').style.color = score >= 80 ? '#4ADE80' : (score >= 50 ? '#F59E0B' : '#F87171');
+    $('audit-issues').innerHTML = issues.map(function (iss) {
+      var cls = iss.level === 'error' ? 'issue-error' : (iss.level === 'warn' ? 'issue-warn' : 'issue-pass');
+      var badge = iss.level === 'error'
+        ? '<span class="text-[10px] font-bold uppercase tracking-widest bg-red-500/15 text-red-300 px-2 py-0.5 rounded">Error</span>'
+        : (iss.level === 'warn'
+          ? '<span class="text-[10px] font-bold uppercase tracking-widest bg-amber-500/15 text-amber-300 px-2 py-0.5 rounded">Warning</span>'
+          : '<span class="text-[10px] font-bold uppercase tracking-widest bg-mint-400/15 text-mint-300 px-2 py-0.5 rounded">Pass</span>');
+      return '<div class="fade-in rounded-xl bg-controldeep border border-pipe ' + cls + ' p-4">' +
+        '<div class="flex items-center gap-2 mb-1.5">' + badge + '</div>' +
+        '<p class="text-sm text-slate-200">' + esc(iss.message) + '</p>' +
+        (iss.fix ? '<p class="text-sm text-amber-300/90 mt-1.5"><span class="font-bold">Fix:</span> ' + esc(iss.fix) + '</p>' : '') +
+      '</div>';
+    }).join('');
+    $('audit-results').classList.remove('hidden');
+  }
+
+  function doAudit(raw) {
+    var res = parseUrl(raw);
+    if (!res.ok) { showMsg($('audit-msg'), res.error, true); $('audit-results').classList.add('hidden'); return; }
+    hideMsg($('audit-msg'));
+    var a = auditUtm(res.params);
+    renderAudit(a.issues, a.score);
+  }
+
+  $('btn-audit').addEventListener('click', function () { doAudit($('audit-input').value); });
+  $('audit-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') doAudit($('audit-input').value); });
+  $('btn-audit-current').addEventListener('click', function () {
+    if (!state.base) {
+      showMsg($('audit-msg'), 'Parse a URL in Station 1 first, then audit it here.', true);
+      return;
+    }
+    var url = rebuildUrl(state.base, state.params, state.fragment);
+    $('audit-input').value = url;
+    doAudit(url);
+  });
+
+  /* ---------- Station 3: presets ---------- */
+
+  function loadCustoms() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      state.customs = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(state.customs)) state.customs = [];
+    } catch (e) { state.customs = []; }
+  }
+  function saveCustoms() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state.customs)); } catch (e) {}
+  }
+  function allPresets() {
+    return state.builtins.concat(state.customs.map(function (p, i) {
+      var c = {}; for (var k in p) c[k] = p[k]; c.__custom = i; return c;
+    }));
+  }
+
+  function renderPresetSelect() {
+    var sel = $('preset-select');
+    var all = allPresets();
+    sel.innerHTML = all.map(function (p, i) {
+      return '<option value="' + i + '">' + esc(p.name || ('Preset ' + (i + 1))) + (p.__custom !== undefined ? ' (mine)' : '') + '</option>';
+    }).join('');
+    if (all.length) fillPresetForm(all[0]);
+  }
+
+  function readPresetForm() {
+    return {
+      name: $('p-name').value.trim(),
+      source: $('p-source').value.trim(),
+      medium: $('p-medium').value.trim(),
+      campaign: $('p-campaign').value.trim(),
+      term: $('p-term').value.trim(),
+      content: $('p-content').value.trim()
+    };
+  }
+
+  function fillPresetForm(p) {
+    $('p-name').value = p.name || '';
+    $('p-source').value = p.source || '';
+    $('p-medium').value = p.medium || '';
+    $('p-campaign').value = p.campaign || '';
+    $('p-term').value = p.term || '';
+    $('p-content').value = p.content || '';
+    refreshGuardrails();
+  }
+
+  function refreshGuardrails() {
+    var preset = readPresetForm();
+    var v = validatePreset(preset);
+    var box = $('preset-guardrails');
+    if (!v.warnings.length) {
+      box.innerHTML = '<div class="fade-in rounded-xl bg-mint-400/10 border border-mint-400/40 px-4 py-3 text-sm text-mint-300">All guardrails pass — this preset follows UTM conventions.</div>';
+    } else {
+      box.innerHTML = v.warnings.map(function (w) {
+        var err = w.level === 'error';
+        return '<div class="fade-in rounded-xl px-4 py-2.5 text-sm ' + (err ? 'bg-red-500/10 border border-red-500/40 text-red-200' : 'bg-amber-500/10 border border-amber-500/40 text-amber-200') + '">' +
+          '<span class="font-bold uppercase text-[10px] tracking-widest mr-2">' + (err ? 'Blocker' : 'Warning') + '</span>' + esc(w.message) + '</div>';
+      }).join('');
+    }
+    box.classList.remove('hidden');
+    // live preview
+    var base = $('preset-base').value.trim() || 'https://example.com/landing';
+    var b = buildUtmUrl(base, preset);
+    $('preset-preview').textContent = b.url;
+    $('preset-preview-wrap').classList.remove('hidden');
+  }
+
+  ['p-name','p-source','p-medium','p-campaign','p-term','p-content'].forEach(function (id) {
+    $(id).addEventListener('input', refreshGuardrails);
+  });
+  $('preset-base').addEventListener('input', refreshGuardrails);
+  $('preset-select').addEventListener('change', function () {
+    var all = allPresets();
+    var p = all[parseInt(this.value, 10)];
+    if (p) fillPresetForm(p);
+  });
+
+  $('btn-apply-preset').addEventListener('click', function () {
+    var preset = readPresetForm();
+    var v = validatePreset(preset);
+    if (!v.ok) {
+      refreshGuardrails();
+      var box = $('btn-apply-preset');
+      box.classList.add('warn-shake');
+      setTimeout(function () { box.classList.remove('warn-shake'); }, 350);
+      return;
+    }
+    var r = applyPresetToParams(state.params, preset);
+    if (!state.base) state.base = $('preset-base').value.trim() || 'https://example.com/landing';
+    state.params = r.params;
+    $('pipeline-wrap').classList.remove('hidden');
+    renderValves();
+    showMsg($('parse-msg'), 'Preset "' + (preset.name || 'untitled') + '" applied to the pipeline valves.', false);
+    document.getElementById('parser-station').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  $('btn-save-preset').addEventListener('click', function () {
+    var preset = readPresetForm();
+    var v = validatePreset(preset);
+    if (!v.ok) {
+      refreshGuardrails();
+      var box = $('btn-save-preset');
+      box.classList.add('warn-shake');
+      setTimeout(function () { box.classList.remove('warn-shake'); }, 350);
+      return;
+    }
+    state.customs.push(preset);
+    saveCustoms();
+    renderPresetSelect();
+    $('preset-select').value = String(state.builtins.length + state.customs.length - 1);
+    fillPresetForm(preset);
+    flashCopy($('btn-save-preset'));
+  });
+
+  $('btn-delete-preset').addEventListener('click', function () {
+    var idx = parseInt($('preset-select').value, 10);
+    var all = allPresets();
+    var p = all[idx];
+    if (p && p.__custom !== undefined) {
+      state.customs.splice(p.__custom, 1);
+      saveCustoms();
+      renderPresetSelect();
+    } else {
+      var box = $('btn-delete-preset');
+      box.classList.add('warn-shake');
+      setTimeout(function () { box.classList.remove('warn-shake'); }, 350);
+    }
+  });
+
+  $('btn-copy-preset-url').addEventListener('click', function () {
+    copyText($('preset-preview').textContent, $('btn-copy-preset-url'));
+  });
+
+  $('btn-build-tagged').addEventListener('click', function () {
+    var base = $('preset-base').value.trim();
+    var preset = readPresetForm();
+    if (!base) {
+      showMsg($('parse-msg'), 'Enter a landing page URL to build the tagged link.', true);
+      return;
+    }
+    var v = validatePreset(preset);
+    if (!v.ok) { refreshGuardrails(); return; }
+    var b = buildUtmUrl(base, preset);
+    var out = $('tagged-result');
+    out.textContent = b.url;
+    out.classList.remove('hidden');
+    out.classList.add('fade-in');
+  });
+
+  /* ---------- Station 4: export ---------- */
+
+  var lastExport = '';
+  function guardHasParams() {
+    if (!state.params.length) {
+      var m = $('export-msg');
+      m.textContent = 'Parse a URL in Station 1 first — there is nothing to export yet.';
+      m.className = 'text-sm text-amber-300';
+      m.classList.remove('hidden');
+      return false;
+    }
+    $('export-msg').classList.add('hidden');
+    return true;
+  }
+
+  $('btn-exp-json').addEventListener('click', function () {
+    if (!guardHasParams()) return;
+    lastExport = exportJson(state.params, $('export-enabled-only').checked);
+    $('export-preview').value = lastExport;
+  });
+  $('btn-exp-csv').addEventListener('click', function () {
+    if (!guardHasParams()) return;
+    lastExport = exportCsv(state.params, $('export-enabled-only').checked);
+    $('export-preview').value = lastExport;
+  });
+  $('btn-copy-export').addEventListener('click', function () {
+    var t = $('export-preview').value;
+    if (!t) { guardHasParams(); return; }
+    copyText(t, $('btn-copy-export'));
+  });
+  function download(name, text, mime) {
+    var blob = new Blob([text], { type: mime });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  $('btn-dl-json').addEventListener('click', function () {
+    if (!guardHasParams()) return;
+    download('querykit-params.json', exportJson(state.params, $('export-enabled-only').checked), 'application/json');
+  });
+  $('btn-dl-csv').addEventListener('click', function () {
+    if (!guardHasParams()) return;
+    download('querykit-params.csv', exportCsv(state.params, $('export-enabled-only').checked), 'text/csv');
+  });
+
+  /* ---------- init ---------- */
+  state.builtins = defaultPresets();
+  loadCustoms();
+  renderPresetSelect();
+  refreshGuardrails();
+})();
+</script>
+
+</body>
+</html>
